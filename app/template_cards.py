@@ -215,7 +215,7 @@ def build_register_success_card(
     success_button: dict[str, Any] = {"text": "已完成", "style": 1, "key": "register_done"}
     if issue_list_url:
         success_button = {
-            "text": "产品经理跟进",
+            "text": "产品经理已开始跟进",
             "style": 4,
             "type": 1,
             "url": issue_list_url,
@@ -283,6 +283,7 @@ def build_launch_test_reminder_card(
     *,
     demand_content: str,
     system_name: str = "",
+    feedback_url: str = "",
 ) -> dict[str, Any]:
     preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
     horizontal: list[dict[str, Any]] = [
@@ -294,9 +295,18 @@ def build_launch_test_reminder_card(
     _append_issue_list_link(horizontal)
 
     issue_list_url = get_settings().issue_list_url.strip()
-    buttons: list[dict[str, Any]] = [
-        {"text": "知道了", "style": 4, "key": "launch_test_ack"},
-    ]
+    buttons: list[dict[str, Any]] = []
+    if feedback_url:
+        buttons.append(
+            {
+                "text": "去评价",
+                "style": 1,
+                "type": 1,
+                "url": feedback_url,
+            }
+        )
+    else:
+        buttons.append({"text": "知道了", "style": 4, "key": "launch_test_ack"})
     if issue_list_url:
         buttons.insert(
             0,

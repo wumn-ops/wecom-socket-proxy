@@ -42,6 +42,8 @@ python run.py
 | POST | `/api/test/push?chat_id=` | 测试主动推送（可选 chat_id） |
 | GET | `/register/upload` | H5 图片上传页（需 token） |
 | GET/POST | `/register/upload/api/*` | 上传状态、预览、上传/删除 |
+| GET | `/feedback` | H5 测试评价页（需 token） |
+| GET/POST | `/feedback/api/*` | 评价详情、提交、JSSDK 配置 |
 
 ## 需求登记流程
 
@@ -62,6 +64,19 @@ python run.py
 - `WECOM_CORP_ID` / `WECOM_CORP_SECRET`（自建应用，文档读权限）
 - `SMARTSHEET_DOCID` / `SMARTSHEET_SHEET_ID`
 - `LAUNCH_POLL_INTERVAL_SECONDS`（测试默认 60 秒）
+
+## 上线测试评价（H5）
+
+提醒卡片「去评价」跳转 H5，需求提出人填写：
+
+- **测试结果**（`ft3nIs`）：通过 / 不通过
+- **满意度打分**（`fLOs6M`）：1–10 分
+
+提交后通过 `update_records` 写回智能表格；已评价（测试结果=通过）的记录 H5 只读。用户提交「通过」后，定时轮询将不再重复推送。
+
+相关配置：`FEEDBACK_PATH`、`SMARTSHEET_FIELD_SATISFACTION`、`FEEDBACK_TEST_FAIL_VALUE`、`FEEDBACK_TOKEN_TTL_SECONDS`（默认 7 天）。
+
+> **部署注意**：卡片内 H5 链接走 `PUBLIC_BASE_URL`（公网 Nginx → 8000）。新增 `/feedback` 路由后，须在服务器 `git pull` 并重启服务；可用 `curl -I https://你的域名/feedback?token=x` 验证（应返回 403 而非 404）。
 
 ## 机器人内测试指令
 

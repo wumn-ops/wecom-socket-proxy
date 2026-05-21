@@ -29,8 +29,10 @@ class Settings(BaseSettings):
     smartsheet_sheet_id: str = ""
     smartsheet_field_progress: str = "ftQMc5"
     smartsheet_field_test_result: str = "ft3nIs"
+    smartsheet_field_satisfaction: str = "fLOs6M"
     launch_progress_value: str = "已上线"
     launch_test_pass_value: str = "通过"
+    feedback_test_fail_value: str = "不通过"
     launch_notify_enabled: bool = True
     launch_poll_interval_seconds: int = 60
     launch_notify_state_path: str = "data/launch_notified.json"
@@ -38,7 +40,9 @@ class Settings(BaseSettings):
 
     public_base_url: str = ""
     register_upload_path: str = "/register/upload"
+    feedback_path: str = "/feedback"
     upload_token_ttl_seconds: int = 3600
+    feedback_token_ttl_seconds: int = 604800
     max_upload_bytes: int = 5 * 1024 * 1024
 
     wecom_corp_id: str = ""

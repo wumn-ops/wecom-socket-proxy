@@ -11,10 +11,18 @@ from wecom_aibot_sdk import WSClient
 from app import connection_state
 from app.config import Settings
 from app.notified_store import NotifiedRecordStore
+from app.feedback_routes import build_feedback_page_url
 from app.smartsheet_reader import SmartsheetRecord, fetch_launched_records
 from app.template_cards import build_launch_test_reminder_card
 
 logger = logging.getLogger(__name__)
+
+_ACK_TIMEOUT_MARK = "Reply ack timeout"
+
+
+def _is_late_ack_timeout(exc: Exception) -> bool:
+    """SDK 等待回执超时，但企微侧可能已成功投递（errcode=0 晚到会被 SDK 丢弃）。"""
+    return _ACK_TIMEOUT_MARK in str(exc)
 
 
 class LaunchNotifierService:
@@ -97,6 +105,7 @@ class LaunchNotifierService:
         card = build_launch_test_reminder_card(
             demand_content=record.demand_content,
             system_name=record.system_name,
+            feedback_url=build_feedback_page_url(record.record_id, record.submitter_userid),
         )
         try:
             await client.send_message(
@@ -106,7 +115,14 @@ class LaunchNotifierService:
                     "template_card": card,
                 },
             )
-        except Exception:
+        except Exception as exc:
+            if _is_late_ack_timeout(exc):
+                logger.warning(
+                    "发送上线测试提醒 ack 超时（消息可能已送达）record_id=%s userid=%s",
+                    record.record_id,
+                    record.submitter_userid,
+                )
+                return True
             logger.exception(
                 "发送上线测试提醒失败 record_id=%s userid=%s",
                 record.record_id,
