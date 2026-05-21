@@ -16,9 +16,10 @@ def add_demand_record(
     content: str,
     *,
     userid: str | None = None,
+    system: str | None = None,
     images: list[dict[str, str]] | None = None,
 ) -> tuple[bool, str]:
-    """向智能表格新增一条记录，写入需求内容、提出人与可选图片。"""
+    """向智能表格新增一条记录，写入需求内容、提出人、所属系统与可选图片。"""
     settings = get_settings()
     if not settings.smartsheet_webhook_url:
         return False, "未配置 SMARTSHEET_WEBHOOK_URL"
@@ -29,6 +30,10 @@ def add_demand_record(
     if userid:
         submitter_field = settings.smartsheet_field_submitter
         values[submitter_field] = [{"user_id": userid}]
+
+    if system:
+        system_field = settings.smartsheet_field_system
+        values[system_field] = system
 
     if images:
         image_field = settings.smartsheet_field_image
@@ -67,9 +72,10 @@ def add_demand_record(
     errcode = data.get("errcode")
     if errcode == 0:
         logger.info(
-            "智能表格写入成功 content_field=%s submitter=%s image_count=%s",
+            "智能表格写入成功 content_field=%s submitter=%s system=%s image_count=%s",
             content_field,
             userid or "",
+            system or "",
             len(images or []),
         )
         return True, "ok"

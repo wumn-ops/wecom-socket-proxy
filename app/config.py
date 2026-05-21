@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     smartsheet_field_demand_content: str = "f9VtuW"
     smartsheet_field_image: str = "fhZuXt"
     smartsheet_field_submitter: str = "f04Gwj"
+    smartsheet_field_system: str = "fJodHY"
+    registration_system_options: str = "CRM,SAP,MES,其他"
     issue_list_url: str = ""
 
     public_base_url: str = ""

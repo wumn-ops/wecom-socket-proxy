@@ -10,8 +10,10 @@ from typing import Any
 from wecom_aibot_sdk import WSClient, generate_req_id
 
 from app import connection_state
+from app.config import get_settings
 from app.registrations import MAX_REGISTRATION_IMAGES, registration_store
 from app.smartsheet import add_demand_record
+from app.system_options import parse_option_list, parse_system_selection
 from app.template_cards import (
     build_button_clicked_card,
     build_demo_action_card,
@@ -33,7 +35,7 @@ REGISTER_CANCEL_KEY = "register_cancel"
 
 HELP_TEXT = (
     "可用指令：\n"
-    "- 登记 需求内容：发起需求登记\n"
+    "- 登记 需求内容：发起需求登记（需选择所属系统）\n"
     "- ping / 测试：流式 echo\n"
     "- /help：本帮助\n"
     "- 卡片 / /card：回复示例交互卡片\n"
@@ -131,6 +133,7 @@ class BotMessageHandler:
                 registration = pending
 
         if registration is not None:
+            self._apply_registration_selection(registration, card_event)
             updated = await self._handle_registration_card_event(
                 event_key=event_key,
                 registration=registration,
@@ -210,7 +213,7 @@ class BotMessageHandler:
                 frame,
                 "请在「登记」后附上需求内容，例如：\n\n"
                 "登记 希望优化报表导出速度\n\n"
-                "发送确认卡片后，点「上传图片」附加截图（最多 3 张），"
+                "发送确认卡片后，请选择所属系统，点「上传图片」附加截图（最多 3 张），"
                 "完成后返回卡片点击「提交登记」。",
             )
             return
@@ -244,6 +247,25 @@ class BotMessageHandler:
             ),
         )
 
+    def _apply_registration_selection(
+        self,
+        registration,
+        card_event: dict[str, Any],
+    ) -> None:
+        selected_items = (card_event.get("selected_items") or {}).get("selected_item")
+        options = parse_option_list(get_settings().registration_system_options)
+        selection = parse_system_selection(selected_items, options=options)
+        if selection is None:
+            return
+        option_id, system_name = selection
+        registration_store.update_system(
+            registration.task_id,
+            option_id=option_id,
+            system_name=system_name,
+        )
+        registration.system_option_id = option_id
+        registration.system_name = system_name
+
     async def _handle_registration_card_event(
         self,
         *,
@@ -269,6 +291,7 @@ class BotMessageHandler:
         ok, errmsg = add_demand_record(
             content,
             userid=registration.userid,
+            system=registration.system_name or None,
             images=images or None,
         )
         registration_store.clear(primary_task_id, registration.userid)
@@ -278,6 +301,7 @@ class BotMessageHandler:
                 task_id=card_task_id,
                 demand_content=content,
                 image_count=image_count,
+                system_name=registration.system_name,
             )
         return build_register_failed_card(task_id=card_task_id, error=errmsg)
 
@@ -288,6 +312,7 @@ class BotMessageHandler:
             task_id=task_id,
             image_count=len(registration.uploaded_images),
             upload_url=build_upload_page_url(registration.task_id, registration.userid),
+            system_option_id=registration.system_option_id,
         )
 
     async def _reply_registration_upload_hint(self, frame: dict[str, Any]) -> None:

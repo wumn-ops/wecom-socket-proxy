@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from threading import Lock
 
+from app.config import get_settings
+from app.system_options import default_option, parse_option_list
+
 MAX_REGISTRATION_IMAGES = 3
 
 
@@ -14,6 +17,8 @@ class RegistrationSession:
     demand_content: str
     userid: str
     chattype: str = "single"
+    system_option_id: str = ""
+    system_name: str = ""
     uploaded_images: list[dict[str, str]] = field(default_factory=list)
 
 
@@ -36,11 +41,17 @@ class RegistrationStore:
             if old_task_id:
                 self._registrations.pop(old_task_id, None)
 
+            option_id, system_name = default_option(
+                parse_option_list(get_settings().registration_system_options)
+            )
+
             session = RegistrationSession(
                 task_id=task_id,
                 demand_content=demand_content,
                 userid=userid,
                 chattype=chattype,
+                system_option_id=option_id,
+                system_name=system_name,
             )
             self._registrations[task_id] = session
             self._user_pending[userid] = task_id
@@ -56,6 +67,14 @@ class RegistrationStore:
             if not task_id:
                 return None
             return self._registrations.get(task_id)
+
+    def update_system(self, task_id: str, *, option_id: str, system_name: str) -> None:
+        with self._lock:
+            session = self._registrations.get(task_id)
+            if session is None:
+                return
+            session.system_option_id = option_id
+            session.system_name = system_name
 
     def clear(self, task_id: str, userid: str) -> None:
         with self._lock:

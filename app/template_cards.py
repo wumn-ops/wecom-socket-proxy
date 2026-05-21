@@ -7,6 +7,7 @@ import uuid
 from typing import Any
 
 from app.config import get_settings
+from app.system_options import build_button_selection, parse_option_list
 
 
 def new_task_id() -> str:
@@ -21,6 +22,7 @@ def build_button_interaction_card(
     task_id: str | None = None,
     horizontal_items: list[dict[str, Any]] | None = None,
     buttons: list[dict[str, Any]] | None = None,
+    button_selection: dict[str, Any] | None = None,
     source_desc: str = "wecom-socket-proxy",
 ) -> dict[str, Any]:
     card: dict[str, Any] = {
@@ -45,6 +47,8 @@ def build_button_interaction_card(
         card["sub_title_text"] = sub_title[:112]
     if horizontal_items:
         card["horizontal_content_list"] = horizontal_items[:6]
+    if button_selection:
+        card["button_selection"] = button_selection
     return card
 
 
@@ -131,6 +135,7 @@ def build_register_confirm_card(
     image_count: int = 0,
     upload_url: str = "",
     max_images: int = 3,
+    system_option_id: str = "",
 ) -> dict[str, Any]:
     preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
     image_desc = (
@@ -138,12 +143,22 @@ def build_register_confirm_card(
         if image_count
         else f"可选，最多 {max_images} 张"
     )
+    system_options = parse_option_list(get_settings().registration_system_options)
+    selected_system_id = system_option_id or (
+        system_options[0]["id"] if system_options else ""
+    )
+    system_label = next(
+        (item["text"] for item in system_options if item["id"] == selected_system_id),
+        "",
+    )
 
     horizontal: list[dict[str, Any]] = [
         {"keyname": "提交人", "value": userid[:26]},
         {"keyname": "内容长度", "value": str(len(demand_content))},
         {"keyname": "图片", "value": image_desc[:26]},
     ]
+    if system_label:
+        horizontal.insert(1, {"keyname": "所属系统", "value": system_label[:26]})
     _append_issue_list_link(horizontal)
 
     upload_button: dict[str, Any] = {"text": "上传图片", "style": 4, "key": "register_upload"}
@@ -155,12 +170,20 @@ def build_register_confirm_card(
             "url": upload_url,
         }
 
+    button_selection = None
+    if system_options:
+        button_selection = build_button_selection(
+            options=system_options,
+            selected_id=selected_system_id,
+        )
+
     return build_button_interaction_card(
         title="需求登记确认",
-        desc="上传图片后点提交登记"[:30],
+        desc="选择系统后提交登记"[:30],
         sub_title=f"需求内容：{preview}",
         task_id=task_id or new_task_id(),
         horizontal_items=horizontal,
+        button_selection=button_selection,
         buttons=[
             upload_button,
             {"text": "提交登记", "style": 1, "key": "register_submit"},
@@ -175,12 +198,15 @@ def build_register_success_card(
     task_id: str,
     demand_content: str,
     image_count: int = 0,
+    system_name: str = "",
 ) -> dict[str, Any]:
     preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
     horizontal: list[dict[str, Any]] = [
         {"keyname": "状态", "value": "已登记"},
         {"keyname": "字段", "value": "f9VtuW"},
     ]
+    if system_name:
+        horizontal.append({"keyname": "所属系统", "value": system_name[:26]})
     if image_count:
         horizontal.append({"keyname": "图片", "value": f"{image_count} 张"})
     _append_issue_list_link(horizontal)
