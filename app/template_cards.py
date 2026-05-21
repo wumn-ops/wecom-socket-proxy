@@ -159,7 +159,6 @@ def build_register_confirm_card(
     ]
     if system_label:
         horizontal.insert(1, {"keyname": "所属系统", "value": system_label[:26]})
-    _append_issue_list_link(horizontal)
 
     upload_button: dict[str, Any] = {"text": "上传图片", "style": 4, "key": "register_upload"}
     if upload_url:
@@ -169,6 +168,37 @@ def build_register_confirm_card(
             "type": 1,
             "url": upload_url,
         }
+
+    issue_list_url = get_settings().issue_list_url.strip()
+    if issue_list_url:
+        # 4 个按钮时客户端按 2×2 排列，避免 3 按钮挤一行出现「…」
+        buttons: list[dict[str, Any]] = [
+            upload_button,
+            {"text": "提交登记", "style": 1, "key": "register_submit"},
+            {"text": "取消", "style": 2, "key": "register_cancel"},
+            {
+                "text": "问题清单",
+                "style": 4,
+                "type": 1,
+                "url": issue_list_url,
+            },
+        ]
+    else:
+        # 无第四按钮时：上传入口放正文区链接，底部仅保留 2 个宽按钮
+        if upload_url:
+            for item in horizontal:
+                if item.get("keyname") == "图片":
+                    item["value"] = (
+                        f"已传{image_count}张·续传" if image_count else "点击上传图片"
+                    )[:26]
+                    item["type"] = 1
+                    item["url"] = upload_url
+                    break
+        buttons = [
+            {"text": "提交登记", "style": 1, "key": "register_submit"},
+            {"text": "取消", "style": 2, "key": "register_cancel"},
+        ]
+        _append_issue_list_link(horizontal)
 
     button_selection = None
     if system_options:
@@ -184,11 +214,7 @@ def build_register_confirm_card(
         task_id=task_id or new_task_id(),
         horizontal_items=horizontal,
         button_selection=button_selection,
-        buttons=[
-            upload_button,
-            {"text": "提交登记", "style": 1, "key": "register_submit"},
-            {"text": "取消", "style": 2, "key": "register_cancel"},
-        ],
+        buttons=buttons,
         source_desc="需求登记",
     )
 
