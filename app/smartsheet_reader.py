@@ -21,6 +21,7 @@ class SmartsheetRecord:
     record_id: str
     submitter_userid: str
     progress_text: str
+    test_result_text: str
     demand_content: str
     system_name: str
 
@@ -62,6 +63,7 @@ def _normalize_record(raw: dict[str, Any]) -> SmartsheetRecord | None:
         record_id=record_id,
         submitter_userid=parse_user_id(values.get(settings.smartsheet_field_submitter)),
         progress_text=parse_select_text(values.get(settings.smartsheet_field_progress)),
+        test_result_text=parse_select_text(values.get(settings.smartsheet_field_test_result)),
         demand_content=parse_text_field(values.get(settings.smartsheet_field_demand_content)),
         system_name=parse_text_field(values.get(settings.smartsheet_field_system)),
     )
@@ -83,6 +85,7 @@ def fetch_records_page(*, offset: int = 0, limit: int = 100) -> tuple[list[dict[
         "key_type": "CELL_VALUE_KEY_TYPE_FIELD_ID",
         "field_ids": [
             settings.smartsheet_field_progress,
+            settings.smartsheet_field_test_result,
             settings.smartsheet_field_submitter,
             settings.smartsheet_field_demand_content,
             settings.smartsheet_field_system,
@@ -111,9 +114,10 @@ def fetch_records_page(*, offset: int = 0, limit: int = 100) -> tuple[list[dict[
 
 
 def fetch_launched_records() -> list[SmartsheetRecord]:
-    """拉取进度为「已上线」且含提出人的记录。"""
+    """拉取进度为「已上线」、测试结果非「通过」且含提出人的记录。"""
     settings = get_settings()
     target_progress = settings.launch_progress_value.strip()
+    pass_result = settings.launch_test_pass_value.strip()
     matched: list[SmartsheetRecord] = []
     offset = 0
 
@@ -124,6 +128,8 @@ def fetch_launched_records() -> list[SmartsheetRecord]:
             if record is None:
                 continue
             if record.progress_text != target_progress:
+                continue
+            if pass_result and record.test_result_text == pass_result:
                 continue
             if not record.submitter_userid:
                 logger.warning(

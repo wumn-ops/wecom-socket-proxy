@@ -55,7 +55,7 @@ python run.py
 
 ## 上线测试提醒（定时轮询）
 
-当智能表格「进度」字段（默认 `ftQMc5`）为 **已上线** 时，通过长连接 `aibot_send_msg` 向「需求提出人」（`f04Gwj`）主动推送测试提醒卡片。每条记录**仅提醒一次**（状态文件 `data/launch_notified.json`）。
+当智能表格「进度」字段（默认 `ftQMc5`）为 **已上线**，且「测试结果」字段（默认 `ft3nIs`）**不等于通过** 时，通过长连接 `aibot_send_msg` 向「需求提出人」（`f04Gwj`）主动推送测试提醒卡片。每条记录**仅提醒一次**（状态文件 `data/launch_notified.json`）。
 
 需在 `.env` 额外配置：
 

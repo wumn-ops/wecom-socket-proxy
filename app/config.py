@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     smartsheet_docid: str = ""
     smartsheet_sheet_id: str = ""
     smartsheet_field_progress: str = "ftQMc5"
+    smartsheet_field_test_result: str = "ft3nIs"
     launch_progress_value: str = "已上线"
+    launch_test_pass_value: str = "通过"
     launch_notify_enabled: bool = True
     launch_poll_interval_seconds: int = 60
     launch_notify_state_path: str = "data/launch_notified.json"
