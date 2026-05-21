@@ -266,7 +266,11 @@ class BotMessageHandler:
             )
 
         images = registration_store.list_smartsheet_images(primary_task_id)
-        ok, errmsg = add_demand_record(content, images=images or None)
+        ok, errmsg = add_demand_record(
+            content,
+            userid=registration.userid,
+            images=images or None,
+        )
         registration_store.clear(primary_task_id, registration.userid)
 
         if ok:

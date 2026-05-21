@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     smartsheet_webhook_url: str = ""
     smartsheet_field_demand_content: str = "f9VtuW"
     smartsheet_field_image: str = "fhZuXt"
+    smartsheet_field_submitter: str = "f04Gwj"
     issue_list_url: str = ""
 
     public_base_url: str = ""
