@@ -97,7 +97,6 @@ class LaunchNotifierService:
         card = build_launch_test_reminder_card(
             demand_content=record.demand_content,
             system_name=record.system_name,
-            record_id=record.record_id,
         )
         try:
             await client.send_message(

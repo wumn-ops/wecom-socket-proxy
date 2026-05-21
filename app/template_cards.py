@@ -283,7 +283,6 @@ def build_launch_test_reminder_card(
     *,
     demand_content: str,
     system_name: str = "",
-    record_id: str = "",
 ) -> dict[str, Any]:
     preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
     horizontal: list[dict[str, Any]] = [
@@ -313,7 +312,7 @@ def build_launch_test_reminder_card(
         title="需求已上线，请测试",
         desc="产品经理已标记上线",
         sub_title=f"需求内容：{preview or '（无）'}",
-        task_id=record_id or new_task_id(),
+        task_id=new_task_id(),
         horizontal_items=horizontal,
         buttons=buttons,
         source_desc="上线测试提醒",
