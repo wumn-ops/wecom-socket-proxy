@@ -6,6 +6,8 @@ import re
 import uuid
 from typing import Any
 
+from app.config import get_settings
+
 
 def new_task_id() -> str:
     return re.sub(r"[^0-9A-Za-z_\-@]", "", uuid.uuid4().hex)
@@ -50,10 +52,11 @@ def build_welcome_card(*, task_id: str | None = None) -> dict[str, Any]:
     return build_button_interaction_card(
         title="欢迎使用长连接机器人",
         desc="WebSocket 模式",
-        sub_title="发送 /help 查看可用指令",
+        sub_title="发送「登记 需求内容」或 /help",
         task_id=task_id or new_task_id(),
         horizontal_items=[
             {"keyname": "模式", "value": "长连接"},
+            {"keyname": "登记", "value": "登记 xxx"},
             {"keyname": "指令", "value": "/help"},
         ],
         buttons=[
@@ -118,3 +121,146 @@ def build_push_notice_card(*, title: str = "主动推送测试") -> dict[str, An
             {"text": "知道了", "style": 4, "key": "push_ack"},
         ],
     )
+
+
+def build_register_confirm_card(
+    *,
+    demand_content: str,
+    userid: str,
+    task_id: str | None = None,
+    image_count: int = 0,
+    upload_url: str = "",
+    max_images: int = 3,
+) -> dict[str, Any]:
+    preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
+    image_desc = (
+        f"已上传 {image_count}/{max_images} 张"
+        if image_count
+        else f"可选，最多 {max_images} 张"
+    )
+
+    horizontal: list[dict[str, Any]] = [
+        {"keyname": "提交人", "value": userid[:26]},
+        {"keyname": "内容长度", "value": str(len(demand_content))},
+        {"keyname": "图片", "value": image_desc[:26]},
+    ]
+    _append_issue_list_link(horizontal)
+
+    upload_button: dict[str, Any] = {"text": "上传图片", "style": 4, "key": "register_upload"}
+    if upload_url:
+        upload_button = {
+            "text": "上传图片",
+            "style": 4,
+            "type": 1,
+            "url": upload_url,
+        }
+
+    return build_button_interaction_card(
+        title="需求登记确认",
+        desc="上传图片后点提交登记"[:30],
+        sub_title=f"需求内容：{preview}",
+        task_id=task_id or new_task_id(),
+        horizontal_items=horizontal,
+        buttons=[
+            upload_button,
+            {"text": "提交登记", "style": 1, "key": "register_submit"},
+            {"text": "取消", "style": 2, "key": "register_cancel"},
+        ],
+        source_desc="需求登记",
+    )
+
+
+def build_register_success_card(
+    *,
+    task_id: str,
+    demand_content: str,
+    image_count: int = 0,
+) -> dict[str, Any]:
+    preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
+    horizontal: list[dict[str, Any]] = [
+        {"keyname": "状态", "value": "已登记"},
+        {"keyname": "字段", "value": "f9VtuW"},
+    ]
+    if image_count:
+        horizontal.append({"keyname": "图片", "value": f"{image_count} 张"})
+    _append_issue_list_link(horizontal)
+
+    issue_list_url = get_settings().issue_list_url.strip()
+    success_button: dict[str, Any] = {"text": "已完成", "style": 1, "key": "register_done"}
+    if issue_list_url:
+        success_button = {
+            "text": "产品经理跟进",
+            "style": 4,
+            "type": 1,
+            "url": issue_list_url,
+        }
+
+    return build_button_interaction_card(
+        title="登记成功",
+        desc="已写入智能表格",
+        sub_title=f"需求内容：{preview}",
+        task_id=task_id,
+        horizontal_items=horizontal,
+        buttons=[success_button],
+        source_desc="需求登记",
+    )
+
+
+def build_register_failed_card(*, task_id: str, error: str) -> dict[str, Any]:
+    return build_button_interaction_card(
+        title="登记失败",
+        desc="写入智能表格时出错",
+        sub_title=error[:112],
+        task_id=task_id,
+        horizontal_items=[
+            {"keyname": "状态", "value": "失败"},
+        ],
+        buttons=[
+            {"text": "请重试", "style": 2, "key": "register_retry_hint"},
+        ],
+        source_desc="需求登记",
+    )
+
+
+def build_register_cancelled_card(*, task_id: str) -> dict[str, Any]:
+    return build_button_interaction_card(
+        title="已取消登记",
+        desc="未写入智能表格",
+        task_id=task_id,
+        horizontal_items=[
+            {"keyname": "状态", "value": "已取消"},
+        ],
+        buttons=[
+            {"text": "关闭", "style": 2, "key": "register_done"},
+        ],
+        source_desc="需求登记",
+    )
+
+
+def build_register_session_expired_card(*, task_id: str) -> dict[str, Any]:
+    return build_button_interaction_card(
+        title="登记已结束",
+        desc="会话不存在或已提交",
+        sub_title="如需再次登记，请重新发送「登记 需求内容」",
+        task_id=task_id,
+        horizontal_items=[
+            {"keyname": "状态", "value": "已结束"},
+        ],
+        buttons=[
+            {"text": "知道了", "style": 4, "key": "register_done"},
+        ],
+        source_desc="需求登记",
+    )
+
+
+def _append_issue_list_link(horizontal: list[dict[str, Any]]) -> None:
+    issue_list_url = get_settings().issue_list_url.strip()
+    if issue_list_url:
+        horizontal.append(
+            {
+                "keyname": "问题清单",
+                "value": "打开问题清单"[:26],
+                "type": 1,
+                "url": issue_list_url,
+            }
+        )

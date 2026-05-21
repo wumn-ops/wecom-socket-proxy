@@ -118,6 +118,9 @@ class WebSocketBotService:
         async def on_text(frame: dict[str, Any]) -> None:
             await handler.on_text(frame)
 
+        async def on_image(frame: dict[str, Any]) -> None:
+            await handler.on_image(frame)
+
         client.on("connected", on_connected)
         client.on("authenticated", on_authenticated)
         client.on("disconnected", on_disconnected)
@@ -126,3 +129,4 @@ class WebSocketBotService:
         client.on("event.enter_chat", on_enter)
         client.on("event.template_card_event", on_card)
         client.on("message.text", on_text)
+        client.on("message.image", on_image)

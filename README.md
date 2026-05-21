@@ -10,7 +10,7 @@
 | 凭证 | Token + EncodingAESKey | **BotID + Secret** |
 | 收消息 | 企微 POST 到公网 URL | **本服务出站连接** `wss://openws.work.weixin.qq.com` |
 | 加解密 | 需要 | 不需要 |
-| HTTP 8000 | 回调 + H5 | **健康检查 + Webhook 占位** |
+| HTTP 8000 | 回调 + H5 上传 | **健康检查 + Webhook 占位 + H5 上传** |
 
 > 同一机器人 API 模式只能二选一（Webhook 或长连接）。测试时请使用**独立测试机器人**，或在服务器上**停 wecom-proxy、启本服务**（同端口 8000，Nginx 无需修改）。
 
@@ -40,12 +40,25 @@ python run.py
 | GET | `/health` | 健康检查 + WebSocket 连接状态 |
 | GET/POST | `/wecom/aibot/callback` | **占位**（Nginx 兼容，不处理业务） |
 | POST | `/api/test/push?chat_id=` | 测试主动推送（可选 chat_id） |
+| GET | `/register/upload` | H5 图片上传页（需 token） |
+| GET/POST | `/register/upload/api/*` | 上传状态、预览、上传/删除 |
+
+## 需求登记流程
+
+与 `wecom-proxy` 一致，经 WebSocket 收发卡片：
+
+1. 发送 `登记 需求内容` → 确认卡片（含 H5 上传链接）
+2. 点「上传图片」→ H5 上传（最多 3 张）
+3. 返回卡片点「提交登记」→ 写入智能表格 → 成功/失败卡片
+
+需在 `.env` 配置 `PUBLIC_BASE_URL`、`SMARTSHEET_WEBHOOK_URL` 等（见 `.env.example`）。
 
 ## 机器人内测试指令
 
 | 输入 | 行为 |
 |------|------|
 | 进入单聊 | 欢迎模板卡片 |
+| `登记 xxx` | 需求登记确认卡片 |
 | `ping` / `测试` | 流式 echo |
 | `/help` | 帮助 |
 | `卡片` / `/card` | 示例交互卡片 |
