@@ -53,6 +53,16 @@ python run.py
 
 需在 `.env` 配置 `PUBLIC_BASE_URL`、`SMARTSHEET_WEBHOOK_URL` 等（见 `.env.example`）。
 
+## 上线测试提醒（定时轮询）
+
+当智能表格「进度」字段（默认 `ftQMc5`）为 **已上线** 时，通过长连接 `aibot_send_msg` 向「需求提出人」（`f04Gwj`）主动推送测试提醒卡片。每条记录**仅提醒一次**（状态文件 `data/launch_notified.json`）。
+
+需在 `.env` 额外配置：
+
+- `WECOM_CORP_ID` / `WECOM_CORP_SECRET`（自建应用，文档读权限）
+- `SMARTSHEET_DOCID` / `SMARTSHEET_SHEET_ID`
+- `LAUNCH_POLL_INTERVAL_SECONDS`（测试默认 60 秒）
+
 ## 机器人内测试指令
 
 | 输入 | 行为 |

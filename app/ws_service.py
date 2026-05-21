@@ -10,6 +10,7 @@ from wecom_aibot_sdk import WSClient
 
 from app import connection_state
 from app.config import Settings
+from app.launch_notifier import LaunchNotifierService
 from app.message_handler import BotMessageHandler
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class WebSocketBotService:
         self._client: WSClient | None = None
         self._handler: BotMessageHandler | None = None
         self._task: asyncio.Task[None] | None = None
+        self._launch_notifier = LaunchNotifierService(settings, lambda: self._client)
 
     @property
     def client(self) -> WSClient | None:
@@ -45,8 +47,10 @@ class WebSocketBotService:
         self._handler = BotMessageHandler(self._client)
         self._register_events()
         self._task = asyncio.create_task(self._run_forever(), name="wecom-ws-client")
+        await self._launch_notifier.start()
 
     async def stop(self) -> None:
+        await self._launch_notifier.stop()
         if self._task is not None:
             self._task.cancel()
             try:

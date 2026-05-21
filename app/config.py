@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     smartsheet_field_submitter: str = "f04Gwj"
     smartsheet_field_system: str = "fJodHY"
     registration_system_options: str = "CRM,SAP,MES,其他"
+    smartsheet_docid: str = ""
+    smartsheet_sheet_id: str = ""
+    smartsheet_field_progress: str = "ftQMc5"
+    launch_progress_value: str = "已上线"
+    launch_notify_enabled: bool = True
+    launch_poll_interval_seconds: int = 60
+    launch_notify_state_path: str = "data/launch_notified.json"
     issue_list_url: str = ""
 
     public_base_url: str = ""

@@ -3,5 +3,6 @@ __pycache__/
 *.py[cod]
 .env
 *.log
+data/
 .pytest_cache/
 .mypy_cache/

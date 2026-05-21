@@ -279,6 +279,47 @@ def build_register_session_expired_card(*, task_id: str) -> dict[str, Any]:
     )
 
 
+def build_launch_test_reminder_card(
+    *,
+    demand_content: str,
+    system_name: str = "",
+    record_id: str = "",
+) -> dict[str, Any]:
+    preview = demand_content[:80] + ("…" if len(demand_content) > 80 else "")
+    horizontal: list[dict[str, Any]] = [
+        {"keyname": "状态", "value": "已上线"},
+        {"keyname": "提醒", "value": "请尽快测试"},
+    ]
+    if system_name:
+        horizontal.insert(1, {"keyname": "所属系统", "value": system_name[:26]})
+    _append_issue_list_link(horizontal)
+
+    issue_list_url = get_settings().issue_list_url.strip()
+    buttons: list[dict[str, Any]] = [
+        {"text": "知道了", "style": 4, "key": "launch_test_ack"},
+    ]
+    if issue_list_url:
+        buttons.insert(
+            0,
+            {
+                "text": "打开问题清单",
+                "style": 1,
+                "type": 1,
+                "url": issue_list_url,
+            },
+        )
+
+    return build_button_interaction_card(
+        title="需求已上线，请测试",
+        desc="产品经理已标记上线",
+        sub_title=f"需求内容：{preview or '（无）'}",
+        task_id=record_id or new_task_id(),
+        horizontal_items=horizontal,
+        buttons=buttons,
+        source_desc="上线测试提醒",
+    )
+
+
 def _append_issue_list_link(horizontal: list[dict[str, Any]]) -> None:
     issue_list_url = get_settings().issue_list_url.strip()
     if issue_list_url:
